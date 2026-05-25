@@ -1,9 +1,10 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { User } from '../models/User.ts';
-import { Preferences } from '../models/Preferences.ts';
-import { AuthenticatedRequest } from '../middleware/authMiddleware.ts';
+import { User } from '../models/User.js';
+import { Preferences } from '../models/Preferences.js';
+import { AuthenticatedRequest } from '../middleware/authMiddleware.js';
+
 
 const generateToken = (id: string) => {
   return jwt.sign({ id }, process.env.JWT_SECRET || 'hopebuddysecretkey123', {

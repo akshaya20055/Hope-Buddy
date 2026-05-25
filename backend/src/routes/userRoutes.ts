@@ -6,8 +6,9 @@ import {
   updatePreferences,
   getNotifications,
   markNotificationsAsRead,
-} from '../controllers/userController.ts';
-import { protect } from '../middleware/authMiddleware.ts';
+} from '../controllers/userController.js';
+import { protect } from '../middleware/authMiddleware.js';
+
 
 const router = express.Router();
 

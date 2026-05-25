@@ -1,11 +1,12 @@
 import { Response } from 'express';
-import { Chat, IMessage } from '../models/Chat.ts';
-import { User } from '../models/User.ts';
-import { Preferences } from '../models/Preferences.ts';
-import { MoodHistory } from '../models/MoodHistory.ts';
-import { Notification } from '../models/Notification.ts';
-import { generateAIResponse, generateStory } from '../services/aiService.ts';
-import { AuthenticatedRequest } from '../middleware/authMiddleware.ts';
+import { Chat, IMessage } from '../models/Chat.js';
+import { User } from '../models/User.js';
+import { Preferences } from '../models/Preferences.js';
+import { MoodHistory } from '../models/MoodHistory.js';
+import { Notification } from '../models/Notification.js';
+import { generateAIResponse, generateStory } from '../services/aiService.js';
+import { AuthenticatedRequest } from '../middleware/authMiddleware.js';
+
 
 export const handleChatMessage = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {

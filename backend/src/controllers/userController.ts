@@ -1,8 +1,9 @@
 import { Response } from 'express';
-import { User } from '../models/User.ts';
-import { Preferences } from '../models/Preferences.ts';
-import { Notification } from '../models/Notification.ts';
-import { AuthenticatedRequest } from '../middleware/authMiddleware.ts';
+import { User } from '../models/User.js';
+import { Preferences } from '../models/Preferences.js';
+import { Notification } from '../models/Notification.js';
+import { AuthenticatedRequest } from '../middleware/authMiddleware.js';
+
 
 export const getProfile = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {

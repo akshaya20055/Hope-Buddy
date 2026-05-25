@@ -1,6 +1,7 @@
 import express from 'express';
-import { handleChatMessage, getChatHistory, clearChatHistory, handleStoryRequest } from '../controllers/chatController.ts';
-import { protect } from '../middleware/authMiddleware.ts';
+import { handleChatMessage, getChatHistory, clearChatHistory, handleStoryRequest } from '../controllers/chatController.js';
+import { protect } from '../middleware/authMiddleware.js';
+
 
 const router = express.Router();
 

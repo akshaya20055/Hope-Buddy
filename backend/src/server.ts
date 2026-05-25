@@ -1,13 +1,14 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { connectDB } from './config/db.ts';
-import authRoutes from './routes/authRoutes.ts';
-import chatRoutes from './routes/chatRoutes.ts';
-import journalRoutes from './routes/journalRoutes.ts';
-import moodRoutes from './routes/moodRoutes.ts';
-import userRoutes from './routes/userRoutes.ts';
-import { notFound, errorHandler } from './middleware/errorMiddleware.ts';
+import { connectDB } from './config/db.js';
+import authRoutes from './routes/authRoutes.js';
+import chatRoutes from './routes/chatRoutes.js';
+import journalRoutes from './routes/journalRoutes.js';
+import moodRoutes from './routes/moodRoutes.js';
+import userRoutes from './routes/userRoutes.js';
+import { notFound, errorHandler } from './middleware/errorMiddleware.js';
+
 
 dotenv.config();
 

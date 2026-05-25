@@ -1,6 +1,7 @@
 import express from 'express';
-import { createJournalEntry, getJournalEntries, deleteJournalEntry } from '../controllers/journalController.ts';
-import { protect } from '../middleware/authMiddleware.ts';
+import { createJournalEntry, getJournalEntries, deleteJournalEntry } from '../controllers/journalController.js';
+import { protect } from '../middleware/authMiddleware.js';
+
 
 const router = express.Router();
 

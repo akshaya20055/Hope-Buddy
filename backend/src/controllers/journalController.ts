@@ -1,8 +1,9 @@
 import { Response } from 'express';
-import { Journal } from '../models/Journal.ts';
-import { User } from '../models/User.ts';
-import { Notification } from '../models/Notification.ts';
-import { AuthenticatedRequest } from '../middleware/authMiddleware.ts';
+import { Journal } from '../models/Journal.js';
+import { User } from '../models/User.js';
+import { Notification } from '../models/Notification.js';
+import { AuthenticatedRequest } from '../middleware/authMiddleware.js';
+
 
 export const createJournalEntry = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {

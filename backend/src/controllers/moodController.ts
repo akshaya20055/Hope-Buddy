@@ -1,8 +1,9 @@
 import { Response } from 'express';
-import { MoodHistory } from '../models/MoodHistory.ts';
-import { User } from '../models/User.ts';
-import { Notification } from '../models/Notification.ts';
-import { AuthenticatedRequest } from '../middleware/authMiddleware.ts';
+import { MoodHistory } from '../models/MoodHistory.js';
+import { User } from '../models/User.js';
+import { Notification } from '../models/Notification.js';
+import { AuthenticatedRequest } from '../middleware/authMiddleware.js';
+
 
 export const logMood = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
