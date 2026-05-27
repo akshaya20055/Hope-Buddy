@@ -4,8 +4,21 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../context/AuthContext.tsx";
 import { useLanguage } from "../../context/LanguageContext.tsx";
+import { useVoice } from "../../hooks/useVoice.ts";
 import { api } from "../../services/api.ts";
-import { BookOpenText, Sparkles, AlertCircle, RefreshCw, Bookmark, Award, Heart, HelpCircle } from "lucide-react";
+import { 
+  BookOpenText, 
+  Sparkles, 
+  RefreshCw, 
+  Award, 
+  Volume2, 
+  VolumeX, 
+  Copy, 
+  Check, 
+  ArrowRight,
+  TrendingUp,
+  BookmarkCheck
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function StoriesPage() {
@@ -16,7 +29,17 @@ export default function StoriesPage() {
   // Story generator states
   const [selectedTheme, setSelectedTheme] = useState<string>("healing");
   const [generatedStory, setGeneratedStory] = useState<string | null>(null);
+  const [storyChoices, setStoryChoices] = useState<string[]>([]);
+  const [storyStats, setStoryStats] = useState<{ attribute: string; value: number }[]>([]);
+  const [storyHistory, setStoryHistory] = useState<string>("");
   const [isGenerating, setIsGenerating] = useState(false);
+
+  // Interaction auxiliary states
+  const [isCopied, setIsCopied] = useState(false);
+  const [isPlayingVoice, setIsPlayingVoice] = useState(false);
+
+  // Initialize Speech Synthesis voice helper
+  const { speakText, stopSpeaking } = useVoice(language);
 
   // Pre-compiled failure-to-success profiles based on language locale
   const historicalProfiles = language === "te" ? [
@@ -71,6 +94,13 @@ export default function StoriesPage() {
     }
   }, [user, loading, router]);
 
+  // Handle cleanup of speech on unmount
+  useEffect(() => {
+    return () => {
+      stopSpeaking();
+    };
+  }, [stopSpeaking]);
+
   if (loading || !user) {
     return (
       <div className="h-[70vh] flex items-center justify-center">
@@ -79,19 +109,87 @@ export default function StoriesPage() {
     );
   }
 
+  // Generate dynamic story opening
   const handleGenerateStory = async () => {
     setIsGenerating(true);
     setGeneratedStory(null);
+    setStoryChoices([]);
+    setStoryStats([]);
+    setStoryHistory("");
+    stopSpeaking();
+    setIsPlayingVoice(false);
 
     try {
       const res = await api.generateStory(selectedTheme);
       if (res.success && res.story) {
-        setGeneratedStory(res.story);
+        // Support both object responses and fallback strings
+        if (typeof res.story === "object") {
+          setGeneratedStory(res.story.text);
+          setStoryChoices(res.story.choices || []);
+          setStoryStats(res.story.stats || []);
+        } else {
+          setGeneratedStory(res.story);
+          setStoryChoices(language === "te" ? ["నవ్వుతూ సాగండి", "తిరిగి చూసుకోండి"] : ["Smile & continue", "Reflect on this"]);
+          setStoryStats([{ attribute: "Resilience", value: 15 }]);
+        }
       }
     } catch (err) {
       console.error("Generate story failed:", err);
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  // Continue interactive adventure path
+  const handleSelectChoice = async (choice: string) => {
+    setIsGenerating(true);
+    stopSpeaking();
+    setIsPlayingVoice(false);
+    
+    // Append previous story to historical chain
+    const updatedHistory = storyHistory ? `${storyHistory}\n\n${generatedStory}` : generatedStory || "";
+    setStoryHistory(updatedHistory);
+    setGeneratedStory(null);
+
+    try {
+      const res = await api.generateStory(selectedTheme, choice, updatedHistory);
+      if (res.success && res.story) {
+        if (typeof res.story === "object") {
+          setGeneratedStory(res.story.text);
+          setStoryChoices(res.story.choices || []);
+          setStoryStats(res.story.stats || []);
+        } else {
+          setGeneratedStory(res.story);
+          setStoryChoices([]);
+          setStoryStats([{ attribute: "Wisdom", value: 20 }]);
+        }
+      }
+    } catch (err) {
+      console.error("Choose path failed:", err);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  // Toggle Text-to-Speech audio readout
+  const toggleVoicePlayback = () => {
+    if (isPlayingVoice) {
+      stopSpeaking();
+      setIsPlayingVoice(false);
+    } else {
+      if (generatedStory) {
+        speakText(generatedStory);
+        setIsPlayingVoice(true);
+      }
+    }
+  };
+
+  // Copy text content to clipboard
+  const copyStoryToClipboard = () => {
+    if (generatedStory) {
+      navigator.clipboard.writeText(generatedStory);
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
     }
   };
 
@@ -104,7 +202,7 @@ export default function StoriesPage() {
   ];
 
   return (
-    <div className="space-y-8 max-w-5xl mx-auto">
+    <div className="space-y-8 max-w-5xl mx-auto pb-20">
       {/* Title Header */}
       <div className="space-y-2">
         <h2 className="text-3xl font-black tracking-tight">{t.stories.title}</h2>
@@ -171,31 +269,127 @@ export default function StoriesPage() {
           disabled={isGenerating}
           className="px-8 py-4 bg-gradient-to-r from-primary-600 to-fuchsia-600 hover:from-primary-700 hover:to-fuchsia-700 text-white font-bold rounded-2xl shadow-lg transition-all duration-300 hover-scale flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
         >
-          {isGenerating ? (
+          {isGenerating && !generatedStory ? (
             <>
               <RefreshCw className="w-4.5 h-4.5 animate-spin" />
               <span>{t.stories.generating}</span>
             </>
           ) : (
-            t.stories.generate
+            generatedStory ? (language === "te" ? "కొత్త ప్రయాణం" : "Generate Another Journey") : t.stories.generate
           )}
         </button>
 
-        {/* Render Generated Story panel */}
+        {/* Render Generated Story Adventure Panel */}
         <AnimatePresence>
-          {generatedStory && (
+          {(generatedStory || isGenerating) && (
             <motion.div
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 15 }}
-              className="p-6 rounded-2xl bg-primary-50/50 dark:bg-white/5 border border-primary-100 dark:border-white/5 shadow-inner mt-4 relative"
+              className="p-6 rounded-3xl bg-primary-50/50 dark:bg-white/5 border border-primary-100 dark:border-white/5 shadow-inner mt-4 relative space-y-6"
             >
-              <div className="absolute top-4 right-4 text-xs font-extrabold uppercase tracking-widest text-primary-500">
-                AI Inspiration
+              {/* Card top toolbar controls */}
+              <div className="flex items-center justify-between border-b border-primary-100 dark:border-white/5 pb-3">
+                <span className="text-xs font-extrabold uppercase tracking-widest text-primary-500 flex items-center gap-1.5 animate-pulse">
+                  <BookOpenText className="w-4 h-4" />
+                  Hope Adventure
+                </span>
+                
+                <div className="flex items-center gap-2">
+                  {/* TTS Voice Readout Control */}
+                  <button
+                    onClick={toggleVoicePlayback}
+                    className={`p-2 rounded-xl border transition-all duration-300 hover:scale-105 ${
+                      isPlayingVoice 
+                        ? "bg-fuchsia-500 border-transparent text-white animate-pulse" 
+                        : "glass-panel text-slate-500 dark:text-slate-400 hover:border-fuchsia-500/50"
+                    }`}
+                    title={isPlayingVoice ? "Stop Reading" : "Read Aloud"}
+                  >
+                    {isPlayingVoice ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                  </button>
+
+                  {/* Copy to Clipboard control */}
+                  <button
+                    onClick={copyStoryToClipboard}
+                    className="p-2 rounded-xl glass-panel text-slate-500 dark:text-slate-400 hover:border-primary-500/50 hover:scale-105 transition-all duration-300"
+                    title="Copy to Clipboard"
+                  >
+                    {isCopied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
-              <div className="text-sm leading-relaxed whitespace-pre-line text-slate-700 dark:text-slate-300 pr-12 font-medium">
-                {generatedStory}
-              </div>
+
+              {/* Story text readout */}
+              {isGenerating && !generatedStory ? (
+                <div className="py-10 flex flex-col items-center justify-center gap-3">
+                  <RefreshCw className="w-8 h-8 text-primary-500 animate-spin" />
+                  <span className="text-xs font-semibold text-slate-400">Forging your next path...</span>
+                </div>
+              ) : (
+                <div className="text-base leading-relaxed whitespace-pre-line text-slate-700 dark:text-slate-200 font-medium font-sans antialiased">
+                  {generatedStory}
+                </div>
+              )}
+
+              {/* Dynamic attribute stats boosting feed */}
+              {storyStats.length > 0 && !isGenerating && (
+                <div className="flex flex-wrap items-center gap-3 pt-3 border-t border-primary-100 dark:border-white/5">
+                  <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 flex items-center gap-1">
+                    <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
+                    Attribute Boosts:
+                  </span>
+                  {storyStats.map((stat, sIdx) => (
+                    <span 
+                      key={sIdx} 
+                      className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center gap-1.5"
+                    >
+                      <Award className="w-3.5 h-3.5 text-yellow-500" />
+                      {stat.attribute} +{stat.value} XP
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {/* Decision options choice matrix */}
+              {!isGenerating && generatedStory && (
+                <div className="pt-4 flex flex-col gap-3">
+                  {storyChoices.length > 0 ? (
+                    <>
+                      <h4 className="text-xs font-extrabold uppercase tracking-widest text-slate-400 flex items-center gap-1">
+                        <BookmarkCheck className="w-4 h-4 text-fuchsia-500" />
+                        Decide Your Next Path:
+                      </h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {storyChoices.map((choice, cIdx) => (
+                          <button
+                            key={cIdx}
+                            onClick={() => handleSelectChoice(choice)}
+                            className="p-4 rounded-2xl glass-panel hover:border-primary-500/50 border text-left text-xs font-bold hover:bg-primary-50/20 dark:hover:bg-white/5 transition-all duration-300 hover:scale-[1.02] flex items-center justify-between group cursor-pointer"
+                          >
+                            <span className="text-slate-600 dark:text-slate-300 group-hover:text-primary-500 transition-colors">
+                              {choice}
+                            </span>
+                            <ArrowRight className="w-4 h-4 text-slate-400 group-hover:translate-x-1 transition-transform group-hover:text-primary-500" />
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-center pt-2">
+                      <p className="text-xs text-slate-400 font-bold mb-3">
+                        {language === "te" ? "ప్రయాణం విజయవంతంగా ముగిసింది!" : "This inspiring journey has reached a peaceful resolution."}
+                      </p>
+                      <button
+                        onClick={handleGenerateStory}
+                        className="px-6 py-2.5 rounded-xl border border-primary-500/30 hover:border-primary-500 text-xs font-extrabold hover:bg-primary-500/10 transition-all duration-300 cursor-pointer"
+                      >
+                        {language === "te" ? "కొత్త ప్రయాణాన్ని ప్రారంభించండి" : "Begin A New Journey"}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>

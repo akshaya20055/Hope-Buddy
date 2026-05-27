@@ -13,6 +13,8 @@ export interface IUser extends mongoose.Document {
     badgeId: string;
     unlockedAt: Date;
   }[];
+  resetPasswordToken?: string;
+  resetPasswordExpire?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -67,7 +69,14 @@ const UserSchema = new mongoose.Schema<IUser>(
         unlockedAt: { type: Date, default: Date.now },
       },
     ],
+    resetPasswordToken: {
+      type: String,
+    },
+    resetPasswordExpire: {
+      type: Date,
+    },
   },
+
   {
     timestamps: true,
   }

@@ -4,18 +4,16 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../context/AuthContext.tsx";
-import { useLanguage } from "../../context/LanguageContext.tsx";
-import { Mail, Lock, AlertCircle, HeartHandshake, Eye, EyeOff } from "lucide-react";
+import { api } from "../../services/api.ts";
+import { Mail, AlertCircle, CheckCircle, ArrowLeft, HeartHandshake } from "lucide-react";
 import { motion } from "framer-motion";
 
-export default function LoginPage() {
-  const { login, user, loading } = useAuth();
-  const { t } = useLanguage();
+export default function ForgotPasswordPage() {
+  const { user, loading } = useAuth();
   const router = useRouter();
 
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
+  const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -28,18 +26,26 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setSuccess(null);
 
-    if (!email || !password) {
-      setError("Please fill out all credentials.");
+    if (!email) {
+      setError("Please enter your email address.");
       return;
     }
 
     setIsSubmitting(true);
-    const result = await login(email, password);
-    setIsSubmitting(false);
-
-    if (!result.success) {
-      setError(result.message || "Invalid email or password.");
+    try {
+      const res = await api.forgotPassword(email);
+      if (res.success) {
+        setSuccess("Reset link sent successfully. Check your inbox.");
+        setEmail("");
+      } else {
+        setError(res.message || "Something went wrong. Please check your email.");
+      }
+    } catch (err: any) {
+      setError(err.message || "An error occurred. Try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -54,16 +60,16 @@ export default function LoginPage() {
         transition={{ duration: 0.4 }}
         className="w-full max-w-md glass-panel p-8 rounded-3xl shadow-xl flex flex-col gap-6"
       >
-        {/* Brand Header info */}
+        {/* Brand Header */}
         <div className="text-center space-y-2">
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-primary-600 to-fuchsia-500 flex items-center justify-center mx-auto shadow-md">
             <HeartHandshake className="w-6 h-6 text-white" />
           </div>
-          <h2 className="text-2xl font-black tracking-tight">Welcome Back</h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400">Log in to check in on your feelings.</p>
+          <h2 className="text-2xl font-black tracking-tight">Reset Password</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400">Enter your email to receive a recovery link.</p>
         </div>
 
-        {/* Error panel */}
+        {/* Status Alerts */}
         {error && (
           <div className="flex items-center gap-2 p-4 rounded-xl bg-red-500/10 text-red-500 border border-red-500/20 text-sm font-semibold animate-pulse">
             <AlertCircle className="w-4.5 h-4.5 shrink-0" />
@@ -71,9 +77,15 @@ export default function LoginPage() {
           </div>
         )}
 
-        {/* Login credentials Form */}
+        {success && (
+          <div className="flex items-center gap-2 p-4 rounded-xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 text-sm font-semibold">
+            <CheckCircle className="w-4.5 h-4.5 shrink-0" />
+            <span>{success}</span>
+          </div>
+        )}
+
+        {/* Input Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Email input */}
           <div className="space-y-1.5">
             <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               Email Address
@@ -91,40 +103,6 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {/* Password input */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Password
-            </label>
-            <div className="relative">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400" />
-              <input
-                type={showPassword ? "text" : "password"}
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full pl-12 pr-12 py-3.5 rounded-2xl glass-input text-sm"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-all"
-              >
-                {showPassword ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
-              </button>
-            </div>
-          </div>
-
-          {/* Forgot Password Link */}
-          <div className="flex justify-end">
-            <Link href="/forgot-password" className="text-xs font-semibold text-primary-600 dark:text-primary-400 hover:underline">
-              Forgot Password?
-            </Link>
-          </div>
-
-          {/* Submit btn */}
-
           <button
             type="submit"
             disabled={isSubmitting}
@@ -133,18 +111,18 @@ export default function LoginPage() {
             {isSubmitting ? (
               <div className="w-5 h-5 rounded-full border-2 border-white border-t-transparent animate-spin" />
             ) : (
-              "Log In"
+              "Send Reset Link"
             )}
           </button>
         </form>
 
-        {/* Footer links */}
-        <p className="text-center text-xs text-slate-500 dark:text-slate-400 font-semibold">
-          Don't have an account?{" "}
-          <Link href="/signup" className="text-primary-600 dark:text-primary-400 hover:underline">
-            Register now
+        {/* Nav links */}
+        <div className="pt-2 border-t border-primary-100 dark:border-white/5 flex items-center justify-center">
+          <Link href="/login" className="flex items-center gap-2 text-xs font-semibold text-primary-600 dark:text-primary-400 hover:underline">
+            <ArrowLeft className="w-3.5 h-3.5" />
+            Back to Login
           </Link>
-        </p>
+        </div>
       </motion.div>
     </div>
   );

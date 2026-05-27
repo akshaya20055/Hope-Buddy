@@ -35,6 +35,25 @@ export const api = {
     return res.json();
   },
 
+  async forgotPassword(email: string) {
+    const res = await fetch(`${API_URL}/auth/forgot-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+    return res.json();
+  },
+
+  async resetPassword(token: string, data: any) {
+    const res = await fetch(`${API_URL}/auth/reset-password/${token}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    return res.json();
+  },
+
+
   // AI Chat & Stories
   async sendMessage(text: string) {
     const res = await fetch(`${API_URL}/chat/message`, {
@@ -60,11 +79,11 @@ export const api = {
     return res.json();
   },
 
-  async generateStory(category: string) {
+  async generateStory(category: string, choice?: string, history?: string) {
     const res = await fetch(`${API_URL}/chat/story`, {
       method: 'POST',
       headers: getHeaders(),
-      body: JSON.stringify({ category })
+      body: JSON.stringify({ category, choice, history })
     });
     return res.json();
   },

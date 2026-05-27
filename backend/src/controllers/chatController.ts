@@ -169,13 +169,18 @@ export const clearChatHistory = async (req: AuthenticatedRequest, res: Response)
 
 export const handleStoryRequest = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    const { category } = req.body;
+    const { category, choice, history } = req.body;
     const userId = req.user?.id;
     
     const pref = await Preferences.findOne({ userId }) || { language: 'en' };
-    const story = await generateStory(category || 'healing', pref.language as 'en' | 'te');
+    const storyResult = await generateStory(
+      category || 'healing', 
+      (pref.language as 'en' | 'te') || 'en',
+      choice,
+      history
+    );
     
-    res.json({ success: true, story });
+    res.json({ success: true, story: storyResult });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
   }
