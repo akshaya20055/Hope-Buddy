@@ -234,7 +234,7 @@ Rules of Conversation:
   if (apiKey) {
     try {
       const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
 
       // Format conversation history
       const formattedHistory = messages.map(msg => ({
@@ -242,15 +242,11 @@ Rules of Conversation:
         parts: [{ text: msg.text }]
       }));
 
-      // Insert system prompt at start
-      const chatSession = model.startChat({
-        history: formattedHistory.slice(0, -1),
-        systemInstruction: systemPrompt
-      });
+      const result = await model.generateContent(
+  `${systemPrompt}\n\nUser: ${lastMessage}`
+);
 
-      const responseResult = await chatSession.sendMessage(lastMessage);
-      const responseText = responseResult.response.text();
-      
+const responseText = result.response.text();
       if (responseText && responseText.trim().length > 0) {
         return {
           text: responseText,
@@ -425,7 +421,7 @@ export const generateStory = async (
   if (apiKey) {
     try {
       const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
       
       let prompt = `You are "HopeBuddy Storyteller", an expert writer of highly inspiring, interactive, choose-your-own-adventure short stories.
 Language: ${language === 'te' ? 'Telugu' : 'English'}. Respond ONLY in this language.
